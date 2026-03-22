@@ -20,26 +20,20 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Find project folder
-        run: |
-          echo "Ищем gradlew..."
-          find . -name "gradlew"
-
       - name: Build APK
         run: |
-          for dir in $(find . -type f -name "gradlew"); do
-            folder=$(dirname "$dir")
-            echo "Собираем в $folder"
-            chmod +x "$folder/gradlew"
-            cd "$folder"
-            ./gradlew assembleDebug --no-daemon
-            cd -
-            break
-          done
+          cd shaurma_grill_app_android_studio_project
+          cd shaurma_grill_app
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Show files
+        run: |
+          find . -name "*.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v6
         with:
           name: app-debug
-          path: "**/*.apk"
+          path: shaurma_grill_app_android_studio_project/shaurma_grill_app/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
