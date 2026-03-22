@@ -5,53 +5,38 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set up JDK 17
+      - name: Setup JDK
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
 
-      - name: Locate Gradle project
-        id: locate
-        shell: bash
+      - name: Find gradlew
         run: |
-          set -euo pipefail
-          PROJECT_DIR="$(find "$GITHUB_WORKSPACE" -type f -name gradlew -printf '%h\n' | head -n 1)"
-          if [ -z "${PROJECT_DIR:-}" ]; then
-            echo "Файл gradlew не найден"
-            exit 1
-          fi
-          echo "project_dir=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
-          echo "Найден проект: $PROJECT_DIR"
+          echo "Ищем gradlew..."
+          find . -name "gradlew"
 
-      - name: Build debug APK
-        shell: bash
+      - name: Build APK
         run: |
-          set -euo pipefail
-          chmod +x "${{ steps.locate.outputs.project_dir }}/gradlew"
-          cd "${{ steps.locate.outputs.project_dir }}"
+          set -e
+          DIR=$(find . -type f -name "gradlew" | head -n 1 | xargs dirname)
+          echo "Найден проект в: $DIR"
+          chmod +x "$DIR/gradlew"
+          cd "$DIR"
           ./gradlew assembleDebug --no-daemon
 
-      - name: Show built APK files
-        shell: bash
-        run: |
-          find "$GITHUB_WORKSPACE" -type f \( -name "*.apk" -o -name "*.aab" \)
-
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v6
         with:
           name: app-debug
-          path: "**/app/build/outputs/apk/debug/app-debug.apk"
+          path: "**/*.apk"
           if-no-files-found: error
