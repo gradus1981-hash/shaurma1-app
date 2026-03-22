@@ -20,19 +20,22 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Find gradlew
+      - name: Find project folder
         run: |
           echo "Ищем gradlew..."
           find . -name "gradlew"
 
       - name: Build APK
         run: |
-          set -e
-          DIR=$(find . -type f -name "gradlew" | head -n 1 | xargs dirname)
-          echo "Найден проект в: $DIR"
-          chmod +x "$DIR/gradlew"
-          cd "$DIR"
-          ./gradlew assembleDebug --no-daemon
+          for dir in $(find . -type f -name "gradlew"); do
+            folder=$(dirname "$dir")
+            echo "Собираем в $folder"
+            chmod +x "$folder/gradlew"
+            cd "$folder"
+            ./gradlew assembleDebug --no-daemon
+            cd -
+            break
+          done
 
       - name: Upload APK
         uses: actions/upload-artifact@v6
